@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MyWeather</string>
+    <string name="city">City</string>
+    <string name="hour">12:00</string>
+    <string name="sunny">sunny</string>
+    <string name="_0_c">18°C</string>
+    <string name="see_more">See More</string>
+</resources>
