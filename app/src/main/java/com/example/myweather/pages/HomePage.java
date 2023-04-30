@@ -1,6 +1,7 @@
 package com.example.myweather.pages;
 
 import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,21 +12,27 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myweather.R;
+import com.example.myweather.adapter.DayOfWeekAdapter;
 import com.example.myweather.api.ApiBuilder;
+import com.example.myweather.model.DayOfWeek;
 import com.example.myweather.model.MomentOfDay;
 import com.example.myweather.model.WeatherApiModel;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -40,6 +47,8 @@ public class HomePage extends Fragment {
     private String cityLocation;
     Bundle bundle;
     private List<MomentOfDay> weather = new ArrayList<>();
+    public DayOfWeekAdapter adapter;
+    public static List<DayOfWeek> weekList = new ArrayList<>();
 
     public HomePage() {
         super(R.layout.home_page);
@@ -65,6 +74,11 @@ public class HomePage extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        RecyclerView rv = view.findViewById(R.id.recycle_view_resume_week);
+
+        adapter = new DayOfWeekAdapter(weekList);
+        rv.setAdapter(adapter);
     }
 
     private void getInfoFromLocation(){
@@ -74,6 +88,7 @@ public class HomePage extends Fragment {
         log = bundle.getString("longitude");
         call = ApiBuilder.getInstance().getWeather(lat, log, ApiBuilder.UNITS, ApiBuilder.APP_ID);
         call.enqueue(new Callback<WeatherApiModel>() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @SuppressLint("SetTextI18n")
             @Override
             public void onResponse(@NonNull Call<WeatherApiModel> call, @NonNull retrofit2.Response<WeatherApiModel> response) {
@@ -92,6 +107,7 @@ public class HomePage extends Fragment {
         });
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @SuppressLint("SetTextI18n")
     private void configureInfo() {
         Date date = Calendar.getInstance().getTime();
@@ -102,6 +118,30 @@ public class HomePage extends Fragment {
         MomentOfDay md = getMomentOfDay(currentHour);
         temp.setText(Math.round(Double.parseDouble(md.getMain().getTemp())) +"°C");
         setImg(md.getWeather().get(0).getMain(), roundHour(currentHour));
+
+        adapter = new DayOfWeekAdapter(weekList);
+        int cnt = adapter.getItemCount();
+        if (cnt == 0){
+            weekResume();
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void weekResume() {
+        List<String> dayOfWeek = new ArrayList<>(Arrays.asList("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"));
+        int nrDay = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)-1;
+        String currentDay = weather.get(0).getDt_txt().substring(0,10);
+        weather = weather.stream().filter(w -> !w.getDt_txt().contains(currentDay)).collect(Collectors.toList());
+        while(weekList.size() < 5){
+            nrDay = nrDay == 6 ? 0 : nrDay+1;
+            String day = weather.get(0).getDt_txt().substring(0,10);
+            List<MomentOfDay> mdList = weather.stream().filter(w -> w.getDt_txt().contains(day)).collect(Collectors.toList());
+            Double minTemp = mdList.stream().map(md -> Double.parseDouble(md.getMain().getTemp_min())).min(Double::compare).get();
+            Double maxTemp = mdList.stream().map(md -> Double.parseDouble(md.getMain().getTemp_max())).max(Double::compare).get();
+            weekList.add(new DayOfWeek(dayOfWeek.get(nrDay), Math.round(minTemp)+"°C" , Math.round(maxTemp)+"°C", weather.get(0).getWeather().get(0).getMain()));
+            weather.removeAll(mdList);
+        }
+        adapter.submit(weekList);
     }
 
     private MomentOfDay getMomentOfDay(String currentHour){
