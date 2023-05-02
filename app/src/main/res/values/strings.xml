@@ -5,4 +5,10 @@
     <string name="sunny">sunny</string>
     <string name="_0_c">18°C</string>
     <string name="see_more">See More</string>
+    <string name="saved_locations">Saved locations</string>
+    <string name="search_location">Search</string>
+    <string name="save">Save</string>
+    <string name="country">Country</string>
+    <string name="description">Description</string>
+    <string name="min">Min</string>
 </resources>

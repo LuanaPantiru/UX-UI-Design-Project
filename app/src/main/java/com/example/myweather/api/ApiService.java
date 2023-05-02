@@ -18,4 +18,11 @@ public interface ApiService {
             @Query("units") String units,
             @Query("appid") String appid
     );
+
+    @GET("data/2.5/weather")
+    Call<CurrentDay> getByCity(
+            @Query("q") String city,
+            @Query("units") String units,
+            @Query("appid") String appid
+    );
 }

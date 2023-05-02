@@ -7,12 +7,14 @@ public class CurrentDay {
     private Caracteristics main;
     private Wind wind;
     private String name;
+    private Sys sys;
 
-    public CurrentDay(List<Weather> weather, Caracteristics main, Wind wind, String name) {
+    public CurrentDay(List<Weather> weather, Caracteristics main, Wind wind, String name, Sys sys) {
         this.weather = weather;
         this.main = main;
         this.wind = wind;
         this.name = name;
+        this.sys = sys;
     }
 
     public List<Weather> getWeather() {
@@ -29,5 +31,9 @@ public class CurrentDay {
 
     public String getName() {
         return name;
+    }
+
+    public Sys getSys() {
+        return sys;
     }
 }

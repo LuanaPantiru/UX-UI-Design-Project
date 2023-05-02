@@ -60,9 +60,9 @@ public class MainActivity extends AppCompatActivity {
                         bundle.putString("longitude",longitude);
                         selectedFragment.setArguments(bundle);
                         break;
-//                    case R.id.nav_add_location:
-//                        selectedFragment = new Cities();
-//                        break;
+                    case R.id.nav_add_location:
+                        selectedFragment = new Cities();
+                        break;
                 }
                 if(selectedFragment != null) {
                     getSupportFragmentManager().beginTransaction()
