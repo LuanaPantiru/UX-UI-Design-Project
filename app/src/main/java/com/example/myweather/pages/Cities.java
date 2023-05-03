@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myweather.R;
 import com.example.myweather.adapter.CityAdapter;
+import com.example.myweather.adapter.OnItemClickListener;
 import com.example.myweather.data.GetAllOperation;
 import com.example.myweather.data.Location;
 import com.example.myweather.data.LocationRepository;
@@ -24,7 +25,7 @@ import com.example.myweather.data.LocationRepository;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Cities extends Fragment implements LocationRepository {
+public class Cities extends Fragment implements LocationRepository, OnItemClickListener {
 
     private List<Location> cities = new ArrayList<>();
     private CityAdapter adapter;
@@ -101,7 +102,7 @@ public class Cities extends Fragment implements LocationRepository {
     @Override
     public void getAll(List<Location> locations) {
         cities = locations;
-        adapter = new CityAdapter(locations);
+        adapter = new CityAdapter(locations, this);
         rv.setAdapter(adapter);
 
     }
@@ -109,5 +110,35 @@ public class Cities extends Fragment implements LocationRepository {
     @Override
     public void add(String result) {
 
+    }
+
+    @Override
+    public void delete(String result) {
+
+    }
+
+    @Override
+    public void findByCity(Location loc) {
+
+    }
+
+    @Override
+    public void update(String result) {
+
+    }
+
+    @Override
+    public void onItemClick(Location city) {
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.setCustomAnimations(R.anim.enter_right_to_left,R.anim.exit_right_to_left,
+                R.anim.enter_left_to_right,R.anim.exit_left_to_right);
+        Fragment frg = new CityDetails();
+        Bundle bundle = new Bundle();
+        bundle.putString("city",city.getCity());
+        bundle.putBoolean("selected", city.getSelected());
+        frg.setArguments(bundle);
+        fragmentTransaction.replace(R.id.cities,frg);
+        fragmentTransaction.commit();
     }
 }

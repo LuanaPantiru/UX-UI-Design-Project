@@ -49,6 +49,7 @@ public class HomePage extends Fragment {
     private List<MomentOfDay> weather = new ArrayList<>();
     public DayOfWeekAdapter adapter;
     public static List<DayOfWeek> weekList = new ArrayList<>();
+    private final Bundle bundleSeeMore = new Bundle();
 
     public HomePage() {
         super(R.layout.home_page);
@@ -68,6 +69,19 @@ public class HomePage extends Fragment {
         getInfoFromLocation();
 
         buttonSeeMore = v.findViewById(R.id.See_more);
+        buttonSeeMore.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.setCustomAnimations(R.anim.enter_right_to_left,R.anim.exit_right_to_left,
+                        R.anim.enter_left_to_right,R.anim.exit_left_to_right);
+                Fragment frg = new SeeMore();
+                frg.setArguments(bundleSeeMore);
+                fragmentTransaction.replace(R.id.home_page,frg);
+                fragmentTransaction.commit();
+            }
+        });
         return v;
     }
 
@@ -96,6 +110,9 @@ public class HomePage extends Fragment {
                 cityLocation = response.body().getCity().getName();
 
                 city.setText(cityLocation);
+                bundleSeeMore.putString("city",cityLocation);
+                bundleSeeMore.putString("latitude",lat);
+                bundleSeeMore.putString("longitude",log);
 
                 configureInfo();
             }

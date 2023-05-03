@@ -49,9 +49,8 @@
         android:layout_height="450dp"
         android:layout_below="@id/searchLocation"
         android:layout_alignParentStart="true"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="50dp"
         android:layout_marginTop="23dp"
-        android:layout_marginEnd="16dp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager" />
 
     <View

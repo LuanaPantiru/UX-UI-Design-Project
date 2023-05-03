@@ -18,6 +18,7 @@ import java.util.List;
 public class CityAdapter extends RecyclerView.Adapter<CityAdapter.CityViewHolder> {
 
     private List<Location> dataset;
+    public static OnItemClickListener itemClickListener;
 
     @SuppressLint("NotifyDataSetChanged")
     public void submit(List<Location> cities){
@@ -25,8 +26,9 @@ public class CityAdapter extends RecyclerView.Adapter<CityAdapter.CityViewHolder
         notifyDataSetChanged();
     }
 
-    public CityAdapter(List<Location> data) {
+    public CityAdapter(List<Location> data, OnItemClickListener listener) {
         dataset = data;
+        itemClickListener = listener;
     }
 
     @NonNull
@@ -67,8 +69,15 @@ public class CityAdapter extends RecyclerView.Adapter<CityAdapter.CityViewHolder
             city.setText(item.getCity());
             country.setText(item.getCountry());
             if(item.getSelected()){
-                layout.setBackground(context.getDrawable(R.drawable.box));
+                layout.setBackground(context.getDrawable(R.drawable.location_set_box));
             }
+
+            layout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    itemClickListener.onItemClick(item);
+                }
+            });
         }
     }
 
