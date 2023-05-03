@@ -224,4 +224,9 @@ public class CityDetails extends Fragment implements LocationRepository {
     public void update(String result) {
 
     }
+
+    @Override
+    public void findBySelected(Location loc) {
+
+    }
 }

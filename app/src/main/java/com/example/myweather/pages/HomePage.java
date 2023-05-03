@@ -21,6 +21,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.myweather.R;
 import com.example.myweather.adapter.DayOfWeekAdapter;
 import com.example.myweather.api.ApiBuilder;
+import com.example.myweather.data.FindBySelectedOperation;
+import com.example.myweather.data.Location;
+import com.example.myweather.data.LocationRepository;
 import com.example.myweather.model.DayOfWeek;
 import com.example.myweather.model.MomentOfDay;
 import com.example.myweather.model.WeatherApiModel;
@@ -37,12 +40,13 @@ import java.util.stream.Collectors;
 import retrofit2.Call;
 import retrofit2.Callback;
 
-public class HomePage extends Fragment {
+public class HomePage extends Fragment implements LocationRepository {
 
     public TextView buttonSeeMore;
     public TextView city;
     public TextView time;
     public TextView temp;
+    public TextView description;
     public ImageView img;
     private String cityLocation;
     Bundle bundle;
@@ -58,15 +62,16 @@ public class HomePage extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v = super.onCreateView(inflater,container,savedInstanceState);
+        View v = super.onCreateView(inflater, container, savedInstanceState);
         bundle = getArguments();
 
         time = v.findViewById(R.id.Time);
         temp = v.findViewById(R.id.Temperature);
         img = v.findViewById(R.id.imgIcon);
         city = v.findViewById(R.id.City);
+        description = v.findViewById(R.id.description);
 
-        getInfoFromLocation();
+        getInfo();
 
         buttonSeeMore = v.findViewById(R.id.See_more);
         buttonSeeMore.setOnClickListener(new View.OnClickListener() {
@@ -74,15 +79,19 @@ public class HomePage extends Fragment {
             public void onClick(View v) {
                 FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                fragmentTransaction.setCustomAnimations(R.anim.enter_right_to_left,R.anim.exit_right_to_left,
-                        R.anim.enter_left_to_right,R.anim.exit_left_to_right);
+                fragmentTransaction.setCustomAnimations(R.anim.enter_right_to_left, R.anim.exit_right_to_left,
+                        R.anim.enter_left_to_right, R.anim.exit_left_to_right);
                 Fragment frg = new SeeMore();
                 frg.setArguments(bundleSeeMore);
-                fragmentTransaction.replace(R.id.home_page,frg);
+                fragmentTransaction.replace(R.id.home_page, frg);
                 fragmentTransaction.commit();
             }
         });
         return v;
+    }
+
+    private void getInfo() {
+        new FindBySelectedOperation(this).execute(true);
     }
 
     @Override
@@ -95,7 +104,7 @@ public class HomePage extends Fragment {
         rv.setAdapter(adapter);
     }
 
-    private void getInfoFromLocation(){
+    private void getInfoFromLocation() {
         Call<WeatherApiModel> call;
         String lat, log;
         lat = bundle.getString("latitude");
@@ -108,11 +117,11 @@ public class HomePage extends Fragment {
             public void onResponse(@NonNull Call<WeatherApiModel> call, @NonNull retrofit2.Response<WeatherApiModel> response) {
                 weather = response.body().getList();
                 cityLocation = response.body().getCity().getName();
-
-                city.setText(cityLocation);
-                bundleSeeMore.putString("city",cityLocation);
-                bundleSeeMore.putString("latitude",lat);
-                bundleSeeMore.putString("longitude",log);
+                String country = response.body().getCity().getCountry();
+                city.setText(cityLocation + ", " + country);
+                bundleSeeMore.putString("city", cityLocation);
+                bundleSeeMore.putString("latitude", lat);
+                bundleSeeMore.putString("longitude", log);
 
                 configureInfo();
             }
@@ -132,76 +141,118 @@ public class HomePage extends Fragment {
         String currentHour = dateFormat.format(date);
         time.setText(currentHour);
 
-        MomentOfDay md = getMomentOfDay(currentHour);
-        temp.setText(Math.round(Double.parseDouble(md.getMain().getTemp())) +"°C");
+        MomentOfDay md = weather.get(0);
+        description.setText(md.getWeather().get(0).getMain());
+        temp.setText(Math.round(Double.parseDouble(md.getMain().getTemp())) + "°C");
         setImg(md.getWeather().get(0).getMain(), roundHour(currentHour));
 
         adapter = new DayOfWeekAdapter(weekList);
-        int cnt = adapter.getItemCount();
-        if (cnt == 0){
-            weekResume();
-        }
+        weekResume();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void weekResume() {
-        List<String> dayOfWeek = new ArrayList<>(Arrays.asList("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"));
-        int nrDay = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)-1;
-        String currentDay = weather.get(0).getDt_txt().substring(0,10);
+        List<String> dayOfWeek = new ArrayList<>(Arrays.asList("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"));
+        int nrDay = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1;
+        String currentDay = weather.get(0).getDt_txt().substring(0, 10);
         weather = weather.stream().filter(w -> !w.getDt_txt().contains(currentDay)).collect(Collectors.toList());
-        while(weekList.size() < 5){
-            nrDay = nrDay == 6 ? 0 : nrDay+1;
-            String day = weather.get(0).getDt_txt().substring(0,10);
+        while (weekList.size() < 5) {
+            nrDay = nrDay == 6 ? 0 : nrDay + 1;
+            String day = weather.get(0).getDt_txt().substring(0, 10);
             List<MomentOfDay> mdList = weather.stream().filter(w -> w.getDt_txt().contains(day)).collect(Collectors.toList());
             Double minTemp = mdList.stream().map(md -> Double.parseDouble(md.getMain().getTemp_min())).min(Double::compare).get();
             Double maxTemp = mdList.stream().map(md -> Double.parseDouble(md.getMain().getTemp_max())).max(Double::compare).get();
-            weekList.add(new DayOfWeek(dayOfWeek.get(nrDay), Math.round(minTemp)+"°C" , Math.round(maxTemp)+"°C", weather.get(0).getWeather().get(0).getMain()));
+            weekList.add(new DayOfWeek(dayOfWeek.get(nrDay) + ", " + day, Math.round(minTemp) + "°C", Math.round(maxTemp) + "°C", weather.get(0).getWeather().get(0).getMain()));
             weather.removeAll(mdList);
         }
         adapter.submit(weekList);
     }
 
-    private MomentOfDay getMomentOfDay(String currentHour){
-        int h = roundHour(currentHour);
-        MomentOfDay md1 = weather.get(0);
-        int md1Time = Integer.parseInt(md1.getDt_txt().substring(md1.getDt_txt().length()-8).substring(0,2));
-        MomentOfDay md2 = weather.get(1);
-        int md2Time = Integer.parseInt(md2.getDt_txt().substring(md2.getDt_txt().length()-8).substring(0,2));
-        if(h-md1Time < md2Time - h){
-            return md1;
-        }else{
-            return md2;
-        }
-    }
-
-    private int roundHour(String hour){
+    private int roundHour(String hour) {
         int min = Integer.parseInt(hour.substring(4));
-        if(min<30){
-            return Integer.parseInt(hour.substring(0,2));
-        }else{
-            return Integer.parseInt(hour.substring(0,2))+1;
+        if (min < 30) {
+            return Integer.parseInt(hour.substring(0, 2));
+        } else {
+            return Integer.parseInt(hour.substring(0, 2)) + 1;
         }
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
-    private void setImg(String description, int time){
-        switch (description){
+    private void setImg(String description, int time) {
+        switch (description) {
             case "Clouds":
-                img.setImageDrawable(getResources().getDrawable(R.drawable.clouds,getActivity().getApplicationContext().getTheme()));
+                img.setImageDrawable(getResources().getDrawable(R.drawable.clouds, getActivity().getApplicationContext().getTheme()));
                 break;
             case "Rain":
-                img.setImageDrawable(getResources().getDrawable(R.drawable.rain,getActivity().getApplicationContext().getTheme()));
+                img.setImageDrawable(getResources().getDrawable(R.drawable.rain, getActivity().getApplicationContext().getTheme()));
                 break;
             case "Snow":
-                img.setImageDrawable(getResources().getDrawable(R.drawable.snow,getActivity().getApplicationContext().getTheme()));
+                img.setImageDrawable(getResources().getDrawable(R.drawable.snow, getActivity().getApplicationContext().getTheme()));
                 break;
             case "Clear":
-                if(time>7 && time<21){
-                    img.setImageDrawable(getResources().getDrawable(R.drawable.sun,getActivity().getApplicationContext().getTheme()));
-                }else{
-                    img.setImageDrawable(getResources().getDrawable(R.drawable.moon,getActivity().getApplicationContext().getTheme()));
+                if (time > 7 && time < 21) {
+                    img.setImageDrawable(getResources().getDrawable(R.drawable.sun, getActivity().getApplicationContext().getTheme()));
+                } else {
+                    img.setImageDrawable(getResources().getDrawable(R.drawable.moon, getActivity().getApplicationContext().getTheme()));
                 }
                 break;
         }
+    }
+
+    @Override
+    public void getAll(List<Location> locations) {
+
+    }
+
+    @Override
+    public void add(String result) {
+
+    }
+
+    @Override
+    public void delete(String result) {
+
+    }
+
+    @Override
+    public void findByCity(Location loc) {
+
+    }
+
+    @Override
+    public void update(String result) {
+
+    }
+
+    @Override
+    public void findBySelected(Location loc) {
+        if(loc == null){
+            getInfoFromLocation();
+        }else{
+            getInfoFromDB(loc);
+        }
+    }
+
+    private void getInfoFromDB(Location loc) {
+        Call<WeatherApiModel> call = ApiBuilder.getInstance().getWeatherByCity(loc.getCity(), ApiBuilder.UNITS, ApiBuilder.APP_ID);
+        call.enqueue(new Callback<WeatherApiModel>() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @SuppressLint("SetTextI18n")
+            @Override
+            public void onResponse(@NonNull Call<WeatherApiModel> call, @NonNull retrofit2.Response<WeatherApiModel> response) {
+                weather = response.body().getList();
+                cityLocation = response.body().getCity().getName();
+                String country = response.body().getCity().getCountry();
+                city.setText(cityLocation + ", " + country);
+                bundleSeeMore.putString("city",cityLocation);
+
+                configureInfo();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<WeatherApiModel> call, @NonNull Throwable t) {
+
+            }
+        });
     }
 }

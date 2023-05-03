@@ -24,4 +24,7 @@ public interface LocationDao {
 
     @Update
     void updateLocation(Location... locations);
+
+    @Query("select * from location where selected Like :b")
+    Location findBySelected(Boolean b);
 }

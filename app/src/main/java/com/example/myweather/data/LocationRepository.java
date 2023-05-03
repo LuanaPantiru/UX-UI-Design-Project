@@ -9,4 +9,5 @@ public interface LocationRepository {
     void delete(String result);
     void findByCity(Location loc);
     void update(String result);
+    void findBySelected(Location loc);
 }

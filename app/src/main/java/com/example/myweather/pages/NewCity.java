@@ -86,7 +86,7 @@ public class NewCity extends Fragment implements LocationRepository{
                                 save.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View view) {
-                                        Location loc = new Location(city.getText().toString(), currentDay.getSys().getCountry(),false);
+                                        Location loc = new Location(cityName, currentDay.getSys().getCountry(),false);
                                         new AddOperation(NewCity.this).execute(loc);
                                         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
                                         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -178,6 +178,11 @@ public class NewCity extends Fragment implements LocationRepository{
 
     @Override
     public void update(String result) {
+
+    }
+
+    @Override
+    public void findBySelected(Location loc) {
 
     }
 }

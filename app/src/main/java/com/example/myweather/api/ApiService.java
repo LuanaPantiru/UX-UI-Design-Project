@@ -25,4 +25,11 @@ public interface ApiService {
             @Query("units") String units,
             @Query("appid") String appid
     );
+
+    @GET("data/2.5/forecast")
+    Call<WeatherApiModel> getWeatherByCity(
+            @Query("q") String city,
+            @Query("units") String units,
+            @Query("appid") String appid
+    );
 }

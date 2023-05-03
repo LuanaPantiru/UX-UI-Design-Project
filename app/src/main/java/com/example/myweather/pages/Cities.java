@@ -128,6 +128,11 @@ public class Cities extends Fragment implements LocationRepository, OnItemClickL
     }
 
     @Override
+    public void findBySelected(Location loc) {
+
+    }
+
+    @Override
     public void onItemClick(Location city) {
         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
